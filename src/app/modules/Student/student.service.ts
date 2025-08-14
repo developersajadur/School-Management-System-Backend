@@ -93,12 +93,8 @@ const updateStudentIntoDb = async (
     const student = await Student.findById(id)
       .session(session)
       .populate('user');
-    if (!student) {
+    if (!student || student.isDeleted) {
       throw new AppError(status.NOT_FOUND, 'Student not found');
-    }
-    const user = await User.findById(student?.user).lean().select('isDeleted');
-    if (!user || user?.isDeleted) {
-      throw new AppError(status.NOT_FOUND, 'Associated User not found');
     }
 
     // Update related user if user fields provided
@@ -148,6 +144,7 @@ const getStudentsWithQuery = async (query: Record<string, unknown>) => {
   if (search) {
     // Aggregation-based search
     const pipeline: any[] = [
+      { match: { isDeleted: false } },
       {
         $lookup: {
           from: 'users',
@@ -181,7 +178,9 @@ const getStudentsWithQuery = async (query: Record<string, unknown>) => {
   } else {
     // Use QueryBuilder for normal queries (no deep search)
     const studentQuery = new QueryBuilder(
-      Student.find().populate('user').populate('assignedTeacher'),
+      Student.find({ isDeleted: false })
+        .populate('user')
+        .populate('assignedTeacher'),
       query,
     )
       .filter()
@@ -195,8 +194,42 @@ const getStudentsWithQuery = async (query: Record<string, unknown>) => {
   }
 };
 
+const deleteStudent = async (id: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const student = await Student.findById(id).session(session);
+    if (!student || student.isDeleted) {
+      throw new AppError(status.NOT_FOUND, 'Student not found');
+    }
+
+    // Soft delete student
+    await Student.findByIdAndUpdate(id, { isDeleted: true }, { session });
+
+    // Soft delete linked user
+    if (student.user) {
+      await User.findByIdAndUpdate(
+        student.user,
+        { isDeleted: true },
+        { session },
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return student;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const StudentService = {
   createStudentIntoDb,
   updateStudentIntoDb,
   getStudentsWithQuery,
+  deleteStudent,
 };

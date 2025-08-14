@@ -27,4 +27,10 @@ router.get(
   TeacherController.getTeachersWithQuery,
 );
 
+router.delete(
+  '/delete/:id',
+  auth(USER_ROLE.admin),
+  TeacherController.deleteTeacher,
+);
+
 export const teacherRoute = router;

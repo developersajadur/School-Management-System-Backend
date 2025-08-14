@@ -77,12 +77,12 @@ const updateTeacherIntoDb = async (
 
   try {
     const teacher = await Teacher.findById(id).session(session);
-    if (!teacher) {
+    if (!teacher || teacher.isDeleted) {
       throw new AppError(status.NOT_FOUND, 'Teacher not found');
     }
 
     const user = await User.findById(teacher.user).session(session);
-    if (!user) {
+    if (!user || user.isDeleted) {
       throw new AppError(status.NOT_FOUND, 'Associated user not found');
     }
 
@@ -125,6 +125,7 @@ const getTeachersWithQuery = async (query: Record<string, unknown>) => {
 
   if (search) {
     const pipeline: any[] = [
+      { match: { isDeleted: false } },
       {
         $lookup: {
           from: 'users',
@@ -178,7 +179,7 @@ const getTeachersWithQuery = async (query: Record<string, unknown>) => {
   } else {
     // Use QueryBuilder for normal queries
     const teacherQuery = new QueryBuilder(
-      Teacher.find().populate('user'),
+      Teacher.find({ isDeleted: false }).populate('user'),
       query,
     )
       .filter()
@@ -192,8 +193,42 @@ const getTeachersWithQuery = async (query: Record<string, unknown>) => {
   }
 };
 
+const deleteTeacher = async (id: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const teacher = await Teacher.findById(id).session(session);
+    if (!teacher || teacher.isDeleted) {
+      throw new AppError(status.NOT_FOUND, 'Teacher not found');
+    }
+
+    // Soft delete teacher
+    await Teacher.findByIdAndUpdate(id, { isDeleted: true }, { session });
+
+    // Soft delete linked user
+    if (teacher.user) {
+      await User.findByIdAndUpdate(
+        teacher.user,
+        { isDeleted: true },
+        { session },
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return teacher;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const TeacherService = {
   createTeacherIntoDb,
   updateTeacherIntoDb,
   getTeachersWithQuery,
+  deleteTeacher,
 };

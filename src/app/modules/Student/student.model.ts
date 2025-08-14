@@ -37,6 +37,7 @@ const studentSchema = new Schema<IStudent>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

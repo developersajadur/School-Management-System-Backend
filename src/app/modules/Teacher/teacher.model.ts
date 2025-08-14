@@ -29,6 +29,7 @@ const teacherSchema = new Schema<ITeacher>(
       required: [true, "Teacher's address is required"],
     },
     joiningDate: { type: Date, required: [true, 'Joining date is required'] },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

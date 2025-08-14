@@ -7,6 +7,7 @@ export interface ITeacher {
   classes: string[];
   address: string;
   joiningDate: Date;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

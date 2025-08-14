@@ -16,6 +16,7 @@ export interface IStudent {
   dateOfBirth: Date;
   address: string;
   assignedTeacher?: Types.ObjectId;
+  isDeleted: false;
   createdAt: Date;
   updatedAt: Date;
 }

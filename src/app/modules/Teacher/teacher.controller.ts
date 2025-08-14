@@ -34,8 +34,19 @@ const getTeachersWithQuery = catchAsync(async (req, res) => {
   });
 });
 
+const deleteTeacher = catchAsync(async (req, res) => {
+  await TeacherService.deleteTeacher(req.params.id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Teacher deleted successfully',
+    data: null,
+  });
+});
+
 export const TeacherController = {
   createTeacherIntoDb,
   updateTeacherIntoDb,
   getTeachersWithQuery,
+  deleteTeacher,
 };
