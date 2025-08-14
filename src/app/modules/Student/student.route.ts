@@ -21,4 +21,10 @@ router.patch(
   StudentController.updateStudent,
 );
 
+router.get(
+  '/get-all',
+  auth(USER_ROLE.admin),
+  StudentController.getStudentsWithQuery,
+);
+
 export const StudentRoute = router;

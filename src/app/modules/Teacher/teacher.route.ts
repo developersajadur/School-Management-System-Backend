@@ -21,4 +21,10 @@ router.patch(
   TeacherController.updateTeacherIntoDb,
 );
 
+router.get(
+  '/get-all',
+  auth(USER_ROLE.admin),
+  TeacherController.getTeachersWithQuery,
+);
+
 export const teacherRoute = router;

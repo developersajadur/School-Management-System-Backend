@@ -15,7 +15,6 @@ const createTeacherIntoDb = catchAsync(async (req, res) => {
 
 const updateTeacherIntoDb = catchAsync(async (req, res) => {
   const { id } = req.params;
-  // console.log(id);
   const result = await TeacherService.updateTeacherIntoDb(id, req.body);
   sendResponse(res, {
     statusCode: status.OK,
@@ -25,7 +24,18 @@ const updateTeacherIntoDb = catchAsync(async (req, res) => {
   });
 });
 
+const getTeachersWithQuery = catchAsync(async (req, res) => {
+  const teachers = await TeacherService.getTeachersWithQuery(req.query);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Teachers retrieved successfully',
+    data: teachers,
+  });
+});
+
 export const TeacherController = {
   createTeacherIntoDb,
   updateTeacherIntoDb,
+  getTeachersWithQuery,
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import status from 'http-status';
 import { ICreateTeacher } from './teacher.interface';
 import { Teacher } from './teacher.model';
@@ -5,6 +6,8 @@ import AppError from '../../errors/AppError';
 import mongoose from 'mongoose';
 import { USER_ROLE } from '../User/user.constant';
 import { User } from '../User/user.model';
+import QueryBuilder from '../../builders/QueryBuilder';
+import { teacherSearchableFields } from './teacher.constant';
 
 const createTeacherIntoDb = async (data: ICreateTeacher) => {
   const isExistTeacher = await Teacher.findOne({
@@ -117,7 +120,80 @@ const updateTeacherIntoDb = async (
   }
 };
 
+const getTeachersWithQuery = async (query: Record<string, unknown>) => {
+  const search = query.search ? String(query.search) : null;
+
+  if (search) {
+    const pipeline: any[] = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+      {
+        $match: {
+          $or: teacherSearchableFields.map((field) => ({
+            [field]: { $regex: search, $options: 'i' },
+          })),
+        },
+      },
+    ];
+
+    // Sorting
+    if (query.sort) {
+      const sortFields = (query.sort as string).split(',').join(' ');
+      pipeline.push({
+        $sort: Object.fromEntries(
+          sortFields
+            .split(' ')
+            .map((f) => [f.replace('-', ''), f.startsWith('-') ? -1 : 1]),
+        ),
+      });
+    } else {
+      pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    // Pagination
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    pipeline.push({ $skip: skip }, { $limit: limit });
+
+    const result = await Teacher.aggregate(pipeline);
+    const total = await Teacher.countDocuments({ isDeleted: false });
+
+    return {
+      result,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPage: Math.ceil(total / limit),
+      },
+    };
+  } else {
+    // Use QueryBuilder for normal queries
+    const teacherQuery = new QueryBuilder(
+      Teacher.find().populate('user'),
+      query,
+    )
+      .filter()
+      .sort()
+      .paginate()
+      .fields();
+
+    const result = await teacherQuery.modelQuery;
+    const meta = await teacherQuery.countTotal();
+    return { result, meta };
+  }
+};
+
 export const TeacherService = {
   createTeacherIntoDb,
   updateTeacherIntoDb,
+  getTeachersWithQuery,
 };

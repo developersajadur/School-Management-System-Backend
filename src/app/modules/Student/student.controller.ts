@@ -25,7 +25,18 @@ const updateStudent = catchAsync(async (req, res) => {
   });
 });
 
+const getStudentsWithQuery = catchAsync(async (req, res) => {
+  const students = await StudentService.getStudentsWithQuery(req?.query);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Students retrieved successfully',
+    data: students,
+  });
+});
+
 export const StudentController = {
   createStudentIntoDb,
   updateStudent,
+  getStudentsWithQuery,
 };

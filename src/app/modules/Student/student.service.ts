@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import status from 'http-status';
 import mongoose from 'mongoose';
 import AppError from '../../errors/AppError';
 import { ICreateStudent } from './student.interface';
 import { Student } from './student.model';
 import { User } from '../User/user.model';
+import QueryBuilder from '../../builders/QueryBuilder';
+import { studentSearchableFields } from './student.constant';
 
 const createStudentIntoDb = async (data: ICreateStudent) => {
   const isExistUser = await User.findOne({
@@ -139,7 +142,61 @@ const updateStudentIntoDb = async (
   }
 };
 
+const getStudentsWithQuery = async (query: Record<string, unknown>) => {
+  const search = query.search ? String(query.search) : null;
+
+  if (search) {
+    // Aggregation-based search
+    const pipeline: any[] = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+      {
+        $match: {
+          $or: studentSearchableFields.map((field) => ({
+            [field]: { $regex: search, $options: 'i' },
+          })),
+        },
+      },
+    ];
+
+    // Run aggregation
+    const result = await Student.aggregate(pipeline);
+
+    return {
+      result,
+      meta: {
+        page: 1,
+        limit: result.length,
+        total: result.length,
+        totalPage: 1,
+      },
+    };
+  } else {
+    // Use QueryBuilder for normal queries (no deep search)
+    const studentQuery = new QueryBuilder(
+      Student.find().populate('user').populate('assignedTeacher'),
+      query,
+    )
+      .filter()
+      .sort()
+      .paginate()
+      .fields();
+
+    const result = await studentQuery.modelQuery;
+    const meta = await studentQuery.countTotal();
+    return { result, meta };
+  }
+};
+
 export const StudentService = {
   createStudentIntoDb,
   updateStudentIntoDb,
+  getStudentsWithQuery,
 };
