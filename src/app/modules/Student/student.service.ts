@@ -79,6 +79,67 @@ const createStudentIntoDb = async (data: ICreateStudent) => {
   }
 };
 
+const updateStudentIntoDb = async (
+  id: string,
+  data: Partial<ICreateStudent>,
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const student = await Student.findById(id)
+      .session(session)
+      .populate('user');
+    if (!student) {
+      throw new AppError(status.NOT_FOUND, 'Student not found');
+    }
+    const user = await User.findById(student?.user).lean().select('isDeleted');
+    if (!user || user?.isDeleted) {
+      throw new AppError(status.NOT_FOUND, 'Associated User not found');
+    }
+
+    // Update related user if user fields provided
+    if (data.name || data.email || data.password || data.phone || data.role) {
+      await User.findByIdAndUpdate(
+        student.user,
+        {
+          ...(data.name && { name: data.name }),
+          ...(data.email && { email: data.email }),
+          ...(data.phone && { phone: data.phone }),
+        },
+        { new: true, session },
+      );
+    }
+
+    // Update student fields
+    const updatedStudent = await Student.findByIdAndUpdate(
+      id,
+      {
+        ...(data.rollNumber && { rollNumber: data.rollNumber }),
+        ...(data.className && { className: data.className }),
+        ...(data.section && { section: data.section }),
+        ...(data.guardian && { guardian: data.guardian }),
+        ...(data.dateOfBirth && { dateOfBirth: data.dateOfBirth }),
+        ...(data.address && { address: data.address }),
+        ...(data.assignedTeacher !== undefined && {
+          assignedTeacher: data.assignedTeacher,
+        }),
+      },
+      { new: true, session },
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return updatedStudent;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const StudentService = {
   createStudentIntoDb,
+  updateStudentIntoDb,
 };

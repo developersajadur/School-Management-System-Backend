@@ -14,4 +14,11 @@ router.post(
   StudentController.createStudentIntoDb,
 );
 
+router.patch(
+  '/update/:id',
+  validateRequest(StudentValidation.updateStudentValidation),
+  auth(USER_ROLE.admin),
+  StudentController.updateStudent,
+);
+
 export const StudentRoute = router;

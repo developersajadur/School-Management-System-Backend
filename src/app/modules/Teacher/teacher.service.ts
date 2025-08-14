@@ -65,6 +65,59 @@ const createTeacherIntoDb = async (data: ICreateTeacher) => {
   }
 };
 
+const updateTeacherIntoDb = async (
+  id: string,
+  data: Partial<ICreateTeacher>,
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const teacher = await Teacher.findById(id).session(session);
+    if (!teacher) {
+      throw new AppError(status.NOT_FOUND, 'Teacher not found');
+    }
+
+    const user = await User.findById(teacher.user).session(session);
+    if (!user) {
+      throw new AppError(status.NOT_FOUND, 'Associated user not found');
+    }
+
+    // Update user fields conditionally
+    await User.findByIdAndUpdate(
+      teacher.user,
+      {
+        ...(data.name && { name: data.name }),
+        ...(data.email && { email: data.email }),
+        ...(data.phone && { phone: data.phone }),
+      },
+      { new: true, session },
+    );
+
+    // Update teacher fields conditionally
+    const updatedTeacher = await Teacher.findByIdAndUpdate(
+      id,
+      {
+        ...(data.subjects && { subjects: data.subjects }),
+        ...(data.classes && { classes: data.classes }),
+        ...(data.address && { address: data.address }),
+        ...(data.joiningDate && { joiningDate: data.joiningDate }),
+      },
+      { new: true, session },
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return updatedTeacher;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const TeacherService = {
   createTeacherIntoDb,
+  updateTeacherIntoDb,
 };

@@ -13,6 +13,19 @@ const createStudentIntoDb = catchAsync(async (req, res) => {
   });
 });
 
+const updateStudent = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  // console.log(id);
+  const result = await StudentService.updateStudentIntoDb(id, req.body);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Student updated successfully',
+    data: result,
+  });
+});
+
 export const StudentController = {
   createStudentIntoDb,
+  updateStudent,
 };

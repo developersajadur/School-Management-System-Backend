@@ -36,6 +36,47 @@ const createStudentValidation = z.object({
   }),
 });
 
+const updateStudentValidation = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required').optional(),
+    email: z.string().email('Invalid email format').optional(),
+    phone: z
+      .string()
+      .min(5, 'Phone number is too short')
+      .max(20, 'Phone number is too long')
+      .optional(),
+
+    rollNumber: z.string().min(1, 'Roll number is required').optional(),
+    className: z.string().min(1, 'Class name is required').optional(),
+    section: z.string().min(1, 'Section is required').optional(),
+
+    guardian: z
+      .object({
+        name: z.string().min(1, 'Guardian name is required').optional(),
+        phone: z.string().min(5, 'Guardian phone is too short').optional(),
+        relation: z.string().min(1, 'Relation is required').optional(),
+      })
+      .optional(),
+
+    dateOfBirth: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Invalid date format',
+      })
+      .optional(),
+
+    address: z.string().min(1, 'Address is required').optional(),
+
+    assignedTeacher: z
+      .string()
+      .refine((val) => Types.ObjectId.isValid(val), {
+        message: 'Invalid teacher ID',
+      })
+      .optional(),
+  }),
+});
+
 export const StudentValidation = {
   createStudentValidation,
+  updateStudentValidation,
 };

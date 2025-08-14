@@ -26,6 +26,37 @@ const createTeacherValidation = z.object({
   }),
 });
 
+const updateTeacherValidation = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required').optional(),
+    email: z.string().email('Invalid email format').optional(),
+    phone: z
+      .string()
+      .min(5, 'Phone number is too short')
+      .max(20, 'Phone number is too long')
+      .optional(),
+
+    subjects: z
+      .array(z.string().min(1, 'Subject name cannot be empty'))
+      .min(1, 'At least one subject is required')
+      .optional(),
+    classes: z
+      .array(z.string().min(1, 'Class name cannot be empty'))
+      .min(1, 'At least one class is required')
+      .optional(),
+
+    address: z.string().min(1, 'Address is required').optional(),
+
+    joiningDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Invalid joining date',
+      })
+      .optional(),
+  }),
+});
+
 export const TeacherValidation = {
   createTeacherValidation,
+  updateTeacherValidation,
 };
