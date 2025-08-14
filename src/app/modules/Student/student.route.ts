@@ -33,4 +33,10 @@ router.delete(
   StudentController.deleteStudent,
 );
 
+router.get(
+  '/get-me',
+  auth(USER_ROLE.student),
+  StudentController.getMyProfileForStudent,
+);
+
 export const StudentRoute = router;

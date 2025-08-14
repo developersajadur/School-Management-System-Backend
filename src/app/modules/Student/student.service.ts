@@ -7,6 +7,7 @@ import { Student } from './student.model';
 import { User } from '../User/user.model';
 import QueryBuilder from '../../builders/QueryBuilder';
 import { studentSearchableFields } from './student.constant';
+import { Teacher } from '../Teacher/teacher.model';
 
 const createStudentIntoDb = async (data: ICreateStudent) => {
   const isExistUser = await User.findOne({
@@ -108,6 +109,15 @@ const updateStudentIntoDb = async (
         },
         { new: true, session },
       );
+    }
+
+    if (data.assignedTeacher) {
+      const isExistAssignedTeacher = await Teacher.findById(
+        data.assignedTeacher,
+      );
+      if (!isExistAssignedTeacher || isExistAssignedTeacher.isDeleted) {
+        throw new AppError(status.NOT_FOUND, 'Assigned teacher not found');
+      }
     }
 
     // Update student fields
@@ -227,9 +237,20 @@ const deleteStudent = async (id: string) => {
   }
 };
 
+const getMyProfileForStudent = async (userId: string) => {
+  const result = await Student.findOne({
+    user: userId,
+    isDeleted: false,
+  })
+    .populate('user')
+    .populate('assignedTeacher');
+
+  return result;
+};
 export const StudentService = {
   createStudentIntoDb,
   updateStudentIntoDb,
   getStudentsWithQuery,
   deleteStudent,
+  getMyProfileForStudent,
 };

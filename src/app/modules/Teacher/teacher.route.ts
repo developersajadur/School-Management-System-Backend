@@ -33,4 +33,16 @@ router.delete(
   TeacherController.deleteTeacher,
 );
 
+router.get(
+  '/assigned-students',
+  auth(USER_ROLE.teacher),
+  TeacherController.getAssignedStudents,
+);
+
+router.get(
+  '/get-me',
+  auth(USER_ROLE.teacher),
+  TeacherController.getMyProfileForTeacher,
+);
+
 export const teacherRoute = router;

@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import status from 'http-status';
 import catchAsync from '../../helpers/catchAsync';
 import sendResponse from '../../helpers/sendResponse';
 import { StudentService } from './student.service';
+import { tokenDecoder } from '../Auth/auth.utils';
 
 const createStudentIntoDb = catchAsync(async (req, res) => {
   const result = await StudentService.createStudentIntoDb(req.body);
@@ -45,9 +47,23 @@ const deleteStudent = catchAsync(async (req, res) => {
   });
 });
 
+const getMyProfileForStudent = catchAsync(async (req, res) => {
+  const decoded = tokenDecoder(req);
+  const userId = decoded.userId;
+  const result = await StudentService.getMyProfileForStudent(userId);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Student profile retrieved successfully',
+    data: result,
+  });
+});
+
 export const StudentController = {
   createStudentIntoDb,
   updateStudent,
   getStudentsWithQuery,
   deleteStudent,
+  getMyProfileForStudent,
 };
