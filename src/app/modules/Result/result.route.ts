@@ -15,7 +15,7 @@ router.post(
 );
 
 router.patch(
-  '/update/:id',
+  '/update/:resultId',
   auth(USER_ROLE.admin, USER_ROLE.teacher),
   validateRequest(resultValidation.updateResultValidation),
   ResultController.updateResult,

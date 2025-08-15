@@ -14,13 +14,19 @@ const createResult = async (payload: IResult) => {
   return result;
 };
 
-const updateResult = async (id: string, payload: Partial<IResult>) => {
-  const student = await Student.findById(id);
+const updateResult = async (resultId: string, payload: Partial<IResult>) => {
+  const isResultExist = await Result.findById(resultId)
+    .select('student')
+    .select('isDeleted');
+  if (!isResultExist || isResultExist.isDeleted) {
+    throw new AppError(status.NOT_FOUND, 'Result Not Found');
+  }
+  const student = await Student.findById(isResultExist?.student);
   if (!student || student.isDeleted) {
     throw new AppError(status.NOT_FOUND, 'Student Not Found');
   }
   const result = await Result.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    { _id: resultId, isDeleted: false },
     payload,
     { new: true, runValidators: true },
   );
@@ -45,8 +51,9 @@ const getAllResults = async (query: Record<string, unknown>) => {
 };
 
 const getStudentResults = async (studentId: string) => {
+  const student = await Student.findOne({ user: studentId }).select('_id');
   const results = await Result.find({
-    student: studentId,
+    student: student?._id,
     isDeleted: false,
   }).populate('student');
 

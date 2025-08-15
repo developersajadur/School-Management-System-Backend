@@ -48,17 +48,42 @@ resultSchema.pre('save', function (next) {
 });
 
 // 🔹 Auto-calculate for updates too
-resultSchema.pre('findOneAndUpdate', function (next) {
+resultSchema.pre('findOneAndUpdate', async function (next) {
   const update: any = this.getUpdate();
 
-  if (update.subjects) {
-    const total = update.subjects.reduce(
-      (sum: number, subj: ISubjectMark) => sum + subj.marks,
+  if (update.subjects && Array.isArray(update.subjects)) {
+    // Get the current document
+    const existingDoc = await this.model.findOne(this.getQuery());
+    if (!existingDoc) return next();
+
+    const existingSubjects = existingDoc.subjects.map((s: ISubjectMark) => ({
+      subject: s.subject,
+      marks: s.marks,
+    }));
+
+    // Merge new subjects into existing
+    update.subjects.forEach((newSubj: ISubjectMark) => {
+      const index = existingSubjects.findIndex(
+        (s: any) => s.subject === newSubj.subject,
+      );
+      if (index > -1) {
+        existingSubjects[index].marks = newSubj.marks;
+      } else {
+        existingSubjects.push(newSubj);
+      }
+    });
+
+    // Replace update.subjects with merged array
+    update.subjects = existingSubjects;
+
+    // Recalculate totals and grade
+    const total = existingSubjects.reduce(
+      (sum: number, subj: any) => sum + subj.marks,
       0,
     );
     update.totalMarks = total;
 
-    const average = total / update.subjects.length;
+    const average = total / existingSubjects.length;
     update.grade = calculateGrade(average);
   }
 

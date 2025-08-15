@@ -24,8 +24,8 @@ const createResult = catchAsync(async (req: Request, res: Response) => {
 const updateResult = catchAsync(async (req: Request, res: Response) => {
   const decoded = tokenDecoder(req);
   const updaterId = decoded.userId;
-  const { id } = req.params;
-  const result = await ResultService.updateResult(id, {
+  const { resultId } = req.params;
+  const result = await ResultService.updateResult(resultId, {
     ...req.body,
     updatedBy: updaterId,
   });
