@@ -1,11 +1,11 @@
-import { Document, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface ISubjectMark {
   subject: string;
   marks: number;
 }
 
-export interface IResult extends Document {
+export interface IResult {
   student: Types.ObjectId;
   term: string;
   year: number;
@@ -15,6 +15,7 @@ export interface IResult extends Document {
   remarks?: string;
   isDeleted: boolean;
   createdBy: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
