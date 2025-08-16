@@ -5,7 +5,14 @@ import globalErrorHandler from './app/middlewares/globalErrorhandler';
 import notFound from './app/middlewares/notFound';
 import cookieParser from 'cookie-parser';
 import { appLimiter } from './app/middlewares/rateLimiter';
+import { PaymentController } from './app/modules/Payment/payment.controller';
 const app = express();
+
+app.post(
+  '/api/v1/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  PaymentController.stripeWebhook,
+);
 
 // parsers
 app.use(express.json());

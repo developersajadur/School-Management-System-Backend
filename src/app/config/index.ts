@@ -15,4 +15,8 @@ export default {
     password: process.env.ADMIN_PASSWORD,
     phone: process.env.ADMIN_PHONE,
   },
+  stripe: {
+    secret_key: process.env.STRIPE_SECRET_KEY,
+    webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
+  },
 };
