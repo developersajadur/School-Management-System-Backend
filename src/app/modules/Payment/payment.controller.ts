@@ -8,7 +8,7 @@ import sendResponse from '../../helpers/sendResponse';
 import config from '../../config';
 import { tokenDecoder } from '../Auth/auth.utils';
 
-const createIntent = catchAsync(async (req: Request, res: Response) => {
+const createIntent = catchAsync(async (req, res) => {
   const decoded = tokenDecoder(req);
   const { amount, currency } = req.body;
   const data = await PaymentService.createPaymentIntent({
@@ -44,7 +44,7 @@ const stripeWebhook = async (req: Request, res: Response) => {
   }
 };
 
-const getPayments = catchAsync(async (req: Request, res: Response) => {
+const getPayments = catchAsync(async (req, res) => {
   const data = await PaymentService.getPayments(req.query);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -54,7 +54,7 @@ const getPayments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getPaymentById = catchAsync(async (req: Request, res: Response) => {
+const getPaymentById = catchAsync(async (req, res) => {
   const { id } = req.params;
   const data = await PaymentService.getPaymentById(id);
   sendResponse(res, {
