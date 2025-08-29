@@ -38,7 +38,7 @@ app.use('/api/v1', router);
 app.get('/', async (req: Request, res: Response): Promise<void> => {
   res.status(200).json({
     success: true,
-    message: 'Server Is Running',
+    message: 'Server Is Running now',
   });
 });
 
